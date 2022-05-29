@@ -17,18 +17,9 @@ import {
   Link as ChakraLink,
   Img,
   IconButton,
-  useColorMode,
-  useColorModeValue,
 } from "@chakra-ui/react";
 import { FormControl, FormLabel } from "@chakra-ui/react";
-import {
-  FaHome,
-  FaCommand,
-  FaUpload,
-  FaFileUpload,
-  FaUserPlus,
-  FaCode,
-} from "react-icons/fa";
+import { FaHome, FaCode } from "react-icons/fa";
 import { ColorModeSwitcher } from "./ColorModeSwitcher";
 import { Routes as Switch, Route, Link } from "react-router-dom";
 import { Logo } from "./Logo";
@@ -41,9 +32,10 @@ import {
   FcCommandLine,
   FcMindMap,
   FcProcess,
-  FcHome,
 } from "react-icons/fc";
 import { Stack, useColorModeValue as mode } from "@chakra-ui/react";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 const api_url = "https://api.deth.kanavgupta.xyz";
 
@@ -147,6 +139,9 @@ const ContractAdder = () => (
 
 const Demo = () => {
   const [dialogue, setDialogue] = React.useState(null);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const code =
+    "curl -X POST https://api.deth.kanavgupta.xyz/tx -H 'Content-Type: application/json' \\ \n--data '{ \"hex\": \"<put transaction hex here>\" }'";
   return (
     <>
       <HStack justifySelf="flex-end">
@@ -224,8 +219,11 @@ const Demo = () => {
         <Button
           type="submit"
           bg={"green.400"}
+          isLoading={isProcessing}
+          loadingText="Processing..."
           onClick={async () => {
             const hex = document.getElementById("hex").value;
+            setIsProcessing(true);
             const res = await fetch(`${api_url}/tx`, {
               method: "POST",
               headers: {
@@ -235,7 +233,12 @@ const Demo = () => {
                 hex,
               }),
             }).then((res) => res.json());
-            setDialogue(res.meta.dialogue);
+            if (res.message) {
+              setDialogue("❌ " + res.message);
+            } else {
+              setDialogue(res.meta.dialogue);
+            }
+            setIsProcessing(false);
           }}
         >
           Decode!
@@ -317,14 +320,18 @@ const Demo = () => {
             <Img src={code1} />
           </Box>
         </HStack>
-        <Link to="/admin">Admin? Add a new contract here</Link>
+        <Heading fontSize={"5xl"}>Using the API</Heading>
+        <Box textAlign="left" borderRadius={5}>
+          <SyntaxHighlighter language="javascript" style={docco}>
+            {code}
+          </SyntaxHighlighter>
+        </Box>
       </VStack>
     </>
   );
 };
 
 export const App = () => {
-  const hej = useColorModeValue("gray.100", "purple.500");
   return (
     <ChakraProvider theme={theme}>
       <Box textAlign="center" fontSize="xl">
